@@ -1,0 +1,20 @@
+{
+  "node": {
+    "40dcf975462aba26d7eb21b18fe2ba608ad7e20c28": {
+      "workers": {
+        "app/page": {
+          "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/ai/flows/personalized-course-recommendations.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "personalizedCourseRecommendations",
+          "filename": "src/ai/flows/personalized-course-recommendations.ts"
+        }
+      },
+      "layer": {
+        "app/page": "rsc"
+      },
+      "exportedName": "personalizedCourseRecommendations",
+      "filename": "src/ai/flows/personalized-course-recommendations.ts"
+    }
+  },
+  "edge": {}
+}

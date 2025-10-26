@@ -1,0 +1,46 @@
+{
+  "placeholderImages": [
+    {
+      "id": "course-1",
+      "description": "A person coding on a laptop.",
+      "imageUrl": "https://images.unsplash.com/photo-1598316560453-0246d4611979?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwcm9ncmFtbWluZyUyMGNvbXB1dGVyfGVufDB8fHx8MTc2MTQ2NjE1MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "programming computer"
+    },
+    {
+      "id": "course-2",
+      "description": "A person painting on a canvas.",
+      "imageUrl": "https://images.unsplash.com/photo-1579541671172-43429ce17aca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhcnQlMjBwYWludGluZ3xlbnwwfHx8fDE3NjE0MDQzODd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "art painting"
+    },
+    {
+      "id": "course-3",
+      "description": "A person playing a guitar.",
+      "imageUrl": "https://images.unsplash.com/photo-1625773157886-70a46ebec9ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxtdXNpYyUyMGd1aXRhcnxlbnwwfHx8fDE3NjE0NTMzMjd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "music guitar"
+    },
+    {
+      "id": "course-4",
+      "description": "A marketing chart on a screen.",
+      "imageUrl": "https://images.unsplash.com/photo-1601509876296-aba16d4c10a4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxidXNpbmVzcyUyMG1hcmtldGluZ3xlbnwwfHx8fDE3NjE0NjEyMTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "business marketing"
+    },
+    {
+      "id": "course-5",
+      "description": "A person writing in a notebook.",
+      "imageUrl": "https://images.unsplash.com/photo-1668092547067-8623b1f9e082?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx3cml0aW5nJTIwZWR1Y2F0aW9ufGVufDB8fHx8MTc2MTQ2NjE1MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "writing education"
+    },
+    {
+      "id": "course-6",
+      "description": "A camera on a tripod.",
+      "imageUrl": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwaG90b2dyYXBoeSUyMGNhbWVyYXxlbnwwfHx8fDE3NjE0NjYxNTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "photography camera"
+    },
+    {
+      "id": "hero-background",
+      "description": "A bright and modern library or study space.",
+      "imageUrl": "https://images.unsplash.com/photo-1531429745839-827a6a45e040?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZWR1Y2F0aW9uJTIwbGlicmFyeXxlbnwwfHx8fDE3NjE0NjYxNTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "education library"
+    }
+  ]
+}
