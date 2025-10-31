@@ -21,7 +21,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { BookOpen, DollarSign, Users, Activity, CheckCircle, Star, UserCheck, Clock, XCircle } from 'lucide-react';
+import { BookOpen, DollarSign, Users, Activity, CheckCircle, Star, UserCheck, Clock, XCircle, Pencil } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -34,6 +34,7 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const enrollmentData = [
   { name: 'Jan', enrollments: 65 },
@@ -199,8 +200,8 @@ export default function AdminDashboardClient({ data: initialData }: AdminDashboa
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.totalCourses.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              +{data.coursesLastMonthCount} new courses this month
+             <p className="text-xs text-muted-foreground">
+                <Link href="/admin/courses" className="hover:underline">Manage courses</Link>
             </p>
           </CardContent>
         </Card>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -57,6 +58,7 @@ export default function LoginForm() {
         description: "Welcome back!",
       });
       router.push('/dashboard');
+      router.refresh();
     } catch (error: any) {
       toast({
         variant: 'destructive',

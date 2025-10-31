@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -40,17 +41,22 @@ export default function Home() {
 
       {/* Featured Courses */}
       <section id="featured-courses" className="py-12 md:py-24 lg:py-32">
-        <div className="container">
-          <h2 className="text-3xl font-bold tracking-tight text-center font-headline">
+        <div className="container text-center">
+          <h2 className="text-3xl font-bold tracking-tight font-headline">
             Featured Courses
           </h2>
-          <p className="mt-4 text-center text-muted-foreground">
+          <p className="mt-4 text-muted-foreground">
             Hand-picked courses to help you get started on your learning journey.
           </p>
           <div className="mt-8 grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {featuredCourses.map((course) => (
               <CourseCard key={course.id} course={course} />
             ))}
+          </div>
+           <div className="mt-12">
+            <Button asChild variant="outline">
+              <Link href="/courses">View All Courses</Link>
+            </Button>
           </div>
         </div>
       </section>

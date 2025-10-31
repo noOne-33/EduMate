@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -74,8 +75,10 @@ export default function RegisterForm() {
       // Don't redirect instructors to dashboard immediately
       if (values.role === 'student') {
         router.push('/dashboard');
+        router.refresh();
       } else {
         router.push('/login');
+        router.refresh();
       }
       
     } catch (error: any) {

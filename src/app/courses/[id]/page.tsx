@@ -3,11 +3,40 @@ import { notFound } from 'next/navigation';
 import { courses } from '@/lib/courses';
 import { PlaceHolderImages, type ImagePlaceholder } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Star, Users } from 'lucide-react';
+import { Clock, Star, Users, ExternalLink, Youtube } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import dbConnect from '@/lib/mongodb';
+import Course from '@/models/Course';
+import Link from 'next/link';
+import mongoose from 'mongoose';
 
-export default function CourseDetailPage({ params }: { params: { id: string } }) {
-  const course = courses.find(c => c.id === params.id);
+async function getCourse(id: string) {
+  // Check if the ID is a valid MongoDB ObjectId
+  const isValidObjectId = mongoose.Types.ObjectId.isValid(id);
+
+  if (isValidObjectId) {
+    try {
+      await dbConnect();
+      const dbCourse = await Course.findById(id).lean();
+      if (dbCourse) {
+        // Ensure the returned object has an 'id' property
+        return JSON.parse(JSON.stringify({ ...dbCourse, id: dbCourse._id.toString() }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch course from DB:", error);
+      // Don't throw, just fall through to check local courses
+    }
+  }
+  
+  // If not a valid ObjectId or not found in DB, check local courses
+  const localCourse = courses.find(c => c.id === id);
+  
+  return localCourse || null;
+}
+
+
+export default async function CourseDetailPage({ params }: { params: { id: string } }) {
+  const course = await getCourse(params.id);
 
   if (!course) {
     notFound();
@@ -54,9 +83,28 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
                 />
                 )}
             </div>
-            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6">
-                Enroll Now
+            <div className="text-3xl font-bold text-center mb-4">
+                {course.price > 0 ? `${course.price.toLocaleString()} BDT` : 'Free'}
+            </div>
+            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6 mb-4" asChild>
+                <Link href={`/courses/${course.id}/enroll`}>Enroll Now</Link>
             </Button>
+            <div className="grid grid-cols-2 gap-2">
+                {course.url && (
+                    <Button variant="outline" asChild>
+                        <Link href={course.url} target="_blank">
+                            <ExternalLink className="mr-2 h-4 w-4"/> Website
+                        </Link>
+                    </Button>
+                )}
+                 {course.youtubeUrl && (
+                    <Button variant="outline" asChild>
+                        <Link href={course.youtubeUrl} target="_blank">
+                            <Youtube className="mr-2 h-4 w-4"/> Watch Video
+                        </Link>
+                    </Button>
+                )}
+            </div>
         </div>
       </div>
       <div className="mt-12">

@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Course } from '@/lib/courses';
@@ -5,9 +6,10 @@ import { PlaceHolderImages, type ImagePlaceholder } from '@/lib/placeholder-imag
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Star } from 'lucide-react';
+import type { ICourse } from '@/models/Course';
 
 type CourseCardProps = {
-  course: Course;
+  course: (Course | ICourse) & { id: string };
 };
 
 export default function CourseCard({ course }: CourseCardProps) {
@@ -37,8 +39,7 @@ export default function CourseCard({ course }: CourseCardProps) {
         </CardContent>
         <CardFooter className="p-4 pt-0 flex justify-between items-center text-sm text-muted-foreground border-t mt-auto mx-4 mb-4">
           <div className="flex items-center gap-1 pt-4">
-            <Clock className="h-4 w-4" />
-            <span>{course.duration}</span>
+             <span className="font-bold text-lg text-foreground">{course.price > 0 ? `${course.price.toLocaleString()} BDT` : 'Free'}</span>
           </div>
           <div className="flex items-center gap-1 pt-4">
             <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />

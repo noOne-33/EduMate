@@ -7,12 +7,13 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
-  const isProtectedPage = pathname.startsWith('/dashboard');
+  const isDashboardPage = pathname === '/dashboard';
   const isAdminPage = pathname.startsWith('/admin');
+  const isInstructorPage = pathname.startsWith('/instructor');
 
   // If there's no token
   if (!token) {
-    if (isProtectedPage || isAdminPage) {
+    if (isDashboardPage || isAdminPage || isInstructorPage) {
       return NextResponse.redirect(new URL('/login', req.url));
     }
     return NextResponse.next();
@@ -21,13 +22,31 @@ export async function middleware(req: NextRequest) {
   // If there is a token
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-    const { payload } = await jose.jwtVerify(token, secret) as { payload: { id: string; name: string, role?: string } };
+    const { payload } = await jose.jwtVerify(token, secret) as { payload: { id: string; name: string, role?: string, status?: string } };
 
     if (isAuthPage) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
+
+    // Redirect users from the generic dashboard to their specific one
+    if (isDashboardPage) {
+      if (payload.role === 'admin') {
+        return NextResponse.redirect(new URL('/admin/dashboard', req.url));
+      }
+      if (payload.role === 'instructor') {
+        return NextResponse.redirect(new URL('/instructor/dashboard', req.url));
+      }
+    }
     
     if (isAdminPage && payload.role !== 'admin') {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+    
+    if (isInstructorPage && payload.role !== 'instructor') {
+      // Also deny pending instructors
+      if (payload.status !== 'active') {
+         return NextResponse.redirect(new URL('/dashboard', req.url));
+      }
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
 
@@ -44,7 +63,7 @@ export async function middleware(req: NextRequest) {
         return res;
     }
 
-    if (isProtectedPage || isAdminPage) {
+    if (isDashboardPage || isAdminPage || isInstructorPage) {
         return response;
     }
     
@@ -67,5 +86,3 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
-
-    

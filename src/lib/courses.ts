@@ -7,6 +7,7 @@ export type Course = {
   imageId: string;
   duration: string;
   rating: number;
+  price: number;
 };
 
 export const courses: Course[] = [
@@ -19,6 +20,7 @@ export const courses: Course[] = [
     imageId: 'course-1',
     duration: '62.5 hours',
     rating: 4.7,
+    price: 1500,
   },
   {
     id: '2',
@@ -29,6 +31,7 @@ export const courses: Course[] = [
     imageId: 'course-2',
     duration: '11 hours',
     rating: 4.6,
+    price: 1200,
   },
   {
     id: '3',
@@ -39,6 +42,7 @@ export const courses: Course[] = [
     imageId: 'course-3',
     duration: '23 hours',
     rating: 4.5,
+    price: 2000,
   },
   {
     id: '4',
@@ -49,6 +53,7 @@ export const courses: Course[] = [
     imageId: 'course-4',
     duration: '83.5 hours',
     rating: 4.6,
+    price: 2500,
   },
   {
     id: '5',
@@ -59,6 +64,7 @@ export const courses: Course[] = [
     imageId: 'course-5',
     duration: '7 hours',
     rating: 4.7,
+    price: 900,
   },
   {
     id: '6',
@@ -69,5 +75,6 @@ export const courses: Course[] = [
     imageId: 'course-6',
     duration: '23.5 hours',
     rating: 4.7,
+    price: 1800,
   },
 ];

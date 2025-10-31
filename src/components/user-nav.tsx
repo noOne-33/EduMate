@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { CreditCard, LogOut, User as UserIcon, LayoutDashboard } from 'lucide-react';
+import { CreditCard, LogOut, User as UserIcon, LayoutDashboard, BookCopy, Folder, Users, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 
 type UserNavProps = {
@@ -33,8 +33,7 @@ export default function UserNav({ user }: UserNavProps) {
       const response = await fetch('/api/auth/logout', { method: 'POST' });
       if (response.ok) {
         toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
-        router.push('/');
-        router.refresh();
+        window.location.href = '/';
       } else {
         throw new Error('Logout failed.');
       }
@@ -66,22 +65,66 @@ export default function UserNav({ user }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+           {user.role === 'student' && (
+            <DropdownMenuItem asChild>
+                <Link href="/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  <span>Dashboard</span>
+                </Link>
+              </DropdownMenuItem>
+           )}
           <DropdownMenuItem>
             <UserIcon className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </DropdownMenuItem>
+           {user.role === 'instructor' && (
+             <DropdownMenuItem asChild>
+                <Link href="/instructor/dashboard">
+                  <GraduationCap className="mr-2 h-4 w-4" />
+                  <span>Instructor Dashboard</span>
+                </Link>
+              </DropdownMenuItem>
+           )}
           {user.role === 'admin' && (
-            <DropdownMenuItem asChild>
-              <Link href="/admin/dashboard">
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                <span>Admin Dashboard</span>
-              </Link>
+            <>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  <span>Admin Dashboard</span>
+                </Link>
+              </DropdownMenuItem>
+               <DropdownMenuItem asChild>
+                <Link href="/admin/users">
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>Users</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/courses">
+                  <BookCopy className="mr-2 h-4 w-4" />
+                  <span>Courses</span>
+                </Link>
+              </DropdownMenuItem>
+               <DropdownMenuItem asChild>
+                <Link href="/admin/categories">
+                  <Folder className="mr-2 h-4 w-4" />
+                  <span>Categories</span>
+                </Link>
+              </DropdownMenuItem>
+               <DropdownMenuItem asChild>
+                <Link href="/admin/billing">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Billing</span>
+                </Link>
+              </DropdownMenuItem>
+            </>
+          )}
+          {user.role !== 'admin' && (
+             <DropdownMenuItem>
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Billing</span>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem>
-            <CreditCard className="mr-2 h-4 w-4" />
-            <span>Billing</span>
-          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
@@ -92,5 +135,3 @@ export default function UserNav({ user }: UserNavProps) {
     </DropdownMenu>
   );
 }
-
-    
