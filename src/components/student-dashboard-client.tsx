@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -45,8 +44,13 @@ export default function StudentDashboardClient({ user }: { user: { id: string } 
     fetchEnrollments();
   }, [toast]);
 
-  const approvedCourses = enrollments.filter(e => e.status === 'approved').map(e => e.course);
-  const pendingCourses = enrollments.filter(e => e.status === 'pending').map(e => e.course);
+  const approvedCourses = enrollments
+    .filter(e => e.status === 'approved' && e.course)
+    .map(e => e.course);
+  const pendingCourses = enrollments
+    .filter(e => e.status === 'pending' && e.course)
+    .map(e => e.course);
+
 
   if (isLoading) {
     return (

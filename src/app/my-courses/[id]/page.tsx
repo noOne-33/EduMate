@@ -2,36 +2,107 @@
 import { notFound } from 'next/navigation';
 import dbConnect from '@/lib/mongodb';
 import Course from '@/models/Course';
-import Lecture from '@/models/Lecture';
-import Assignment from '@/models/Assignment';
-import Quiz from '@/models/Quiz';
 import Enrollment from '@/models/Enrollment';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ClipboardList, HelpCircle, Lock } from 'lucide-react';
-import type { ILecture } from '@/models/Lecture';
-import type { IAssignment } from '@/models/Assignment';
-import type { IQuiz } from '@/models/Quiz';
+import { Lock } from 'lucide-react';
 import MyCourseClient from '@/components/my-course-client';
+import mongoose from 'mongoose';
+import Submission from '@/models/Submission';
+import Announcement, { IAnnouncement } from '@/models/Announcement';
+import { ILecture } from '@/models/Lecture';
+import { IAssignment } from '@/models/Assignment';
+import { IQuiz } from '@/models/Quiz';
+import { IQuizAttempt } from '@/models/QuizAttempt';
 
-async function getCourseData(courseId: string) {
+async function getCourseData(courseId: string, userId: string) {
   try {
     await dbConnect();
-    const course = await Course.findById(courseId).lean();
-    if (!course) return null;
+    
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+        return null;
+    }
 
-    const lectures = await Lecture.find({ course: courseId }).sort({ order: 1 }).lean();
-    const assignments = await Assignment.find({ course: courseId }).sort({ assignmentNumber: 1 }).lean();
-    const quizzes = await Quiz.find({ course: courseId }).sort({ createdAt: 1 }).lean();
+    const courseData = await Course.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(courseId) } },
+        {
+            $lookup: {
+                from: 'lectures',
+                localField: '_id',
+                foreignField: 'course',
+                as: 'lectures',
+                pipeline: [ { $sort: { order: 1 } } ]
+            }
+        },
+        {
+            $lookup: {
+                from: 'assignments',
+                localField: '_id',
+                foreignField: 'course',
+                as: 'assignments',
+                 pipeline: [ { $sort: { assignmentNumber: 1 } } ]
+            }
+        },
+        {
+            $lookup: {
+                from: 'quizzes',
+                localField: '_id',
+                foreignField: 'course',
+                as: 'quizzes',
+                pipeline: [ { $sort: { createdAt: 1 } } ]
+            }
+        },
+        {
+            $lookup: {
+                from: 'submissions',
+                let: { courseId: '$_id' },
+                pipeline: [
+                    { $match: { $expr: { $and: [ { $eq: ['$course', '$$courseId'] }, { $eq: ['$user', new mongoose.Types.ObjectId(userId)] } ] } } }
+                ],
+                as: 'submissions'
+            }
+        },
+        {
+            $lookup: {
+                from: 'quizattempts',
+                let: { courseId: '$_id' },
+                pipeline: [
+                    { $match: { $expr: { $and: [ { $eq: ['$course', '$$courseId'] }, { $eq: ['$user', new mongoose.Types.ObjectId(userId)] } ] } } }
+                ],
+                as: 'quizAttempts'
+            }
+        },
+        {
+            $lookup: {
+                from: 'announcements',
+                localField: '_id',
+                foreignField: 'course',
+                as: 'announcements',
+                pipeline: [ { $sort: { createdAt: -1 } } ]
+            }
+        },
+        { $limit: 1 }
+    ]);
 
-    return {
-      course: JSON.parse(JSON.stringify(course)),
-      lectures: JSON.parse(JSON.stringify(lectures)) as ILecture[],
-      assignments: JSON.parse(JSON.stringify(assignments)) as IAssignment[],
-      quizzes: JSON.parse(JSON.stringify(quizzes)) as IQuiz[],
-    };
+    if (courseData.length === 0) {
+      return null;
+    }
+
+    const course = courseData[0];
+
+    // Aggregation returns plain objects, so we need to manually convert ObjectIds to strings
+    const sanitize = (obj: any) => JSON.parse(JSON.stringify(obj));
+
+    return sanitize({
+      course,
+      lectures: course.lectures as ILecture[],
+      assignments: course.assignments as IAssignment[],
+      quizzes: course.quizzes as IQuiz[],
+      submissions: course.submissions as ISubmission[],
+      quizAttempts: course.quizAttempts as IQuizAttempt[],
+      announcements: course.announcements as IAnnouncement[],
+    });
   } catch (error) {
     console.error("Failed to fetch course data:", error);
     return null;
@@ -52,6 +123,9 @@ async function getUser() {
 
 async function verifyEnrollment(userId: string, courseId: string): Promise<boolean> {
     await dbConnect();
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+        return false;
+    }
     const enrollment = await Enrollment.findOne({ user: userId, course: courseId, status: 'approved' });
     return !!enrollment;
 }
@@ -60,7 +134,6 @@ export default async function MyCoursePage({ params }: { params: { id: string } 
   const user = await getUser();
   
   if (!user) {
-    // This case should be handled by middleware, but as a fallback
     notFound();
   }
 
@@ -81,13 +154,13 @@ export default async function MyCoursePage({ params }: { params: { id: string } 
     );
   }
 
-  const courseData = await getCourseData(params.id);
+  const data = await getCourseData(params.id, user.id);
 
-  if (!courseData) {
+  if (!data) {
     notFound();
   }
 
-  const { course, lectures, assignments, quizzes } = courseData;
+  const { course, lectures, assignments, submissions, announcements, quizzes, quizAttempts } = data;
 
   return (
     <div className="container py-12">
@@ -95,7 +168,10 @@ export default async function MyCoursePage({ params }: { params: { id: string } 
             course={course}
             lectures={lectures}
             assignments={assignments}
+            submissions={submissions}
+            announcements={announcements}
             quizzes={quizzes}
+            quizAttempts={quizAttempts}
         />
     </div>
   );

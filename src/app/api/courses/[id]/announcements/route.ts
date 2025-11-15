@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import Quiz from '@/models/Quiz';
+import Announcement from '@/models/Announcement';
 import Course from '@/models/Course';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
 
+// Helper to verify instructor or admin
 async function verifyAuthorized(token: string | undefined, courseId: string) {
   if (!token) return { authorized: false };
   try {
@@ -26,17 +27,19 @@ async function verifyAuthorized(token: string | undefined, courseId: string) {
   }
 }
 
+// GET all announcements for a course
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
     try {
         await dbConnect();
-        const quizzes = await Quiz.find({ course: params.id }).sort({ createdAt: -1 });
-        return NextResponse.json(quizzes, { status: 200 });
+        const announcements = await Announcement.find({ course: params.id }).sort({ createdAt: -1 });
+        return NextResponse.json(announcements, { status: 200 });
     } catch (error) {
-        console.error('Failed to fetch quizzes:', error);
+        console.error('Failed to fetch announcements:', error);
         return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });
     }
 }
 
+// POST a new announcement to a course
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const token = cookies().get('token')?.value;
   const { authorized } = await verifyAuthorized(token, params.id);
@@ -47,25 +50,27 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   
   try {
     const body = await req.json();
-    const { title, description } = body;
+    const { title, content } = body;
 
-    if (!title) {
-        return NextResponse.json({ message: 'Title is required' }, { status: 400 });
+    if (!title || !content) {
+        return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
     await dbConnect();
 
-    const newQuiz = new Quiz({
+    const newAnnouncement = new Announcement({
       course: params.id,
       title,
-      description,
+      content,
     });
 
-    await newQuiz.save();
+    await newAnnouncement.save();
+    
+    // In a real-world scenario, you would trigger emails or notifications to students here
 
-    return NextResponse.json({ message: 'Quiz created successfully', quiz: newQuiz }, { status: 201 });
+    return NextResponse.json({ message: 'Announcement sent successfully', announcement: newAnnouncement }, { status: 201 });
   } catch (error) {
-    console.error('Quiz creation error:', error);
+    console.error('Announcement creation error:', error);
     return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });
   }
 }

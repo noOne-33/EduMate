@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import Quiz from '@/models/Quiz';
+import Question from '@/models/Question';
 import Course from '@/models/Course';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
@@ -26,46 +26,26 @@ async function verifyAuthorized(token: string | undefined, courseId: string) {
   }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-    try {
-        await dbConnect();
-        const quizzes = await Quiz.find({ course: params.id }).sort({ createdAt: -1 });
-        return NextResponse.json(quizzes, { status: 200 });
-    } catch (error) {
-        console.error('Failed to fetch quizzes:', error);
-        return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });
-    }
-}
-
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string, questionId: string } }) {
   const token = cookies().get('token')?.value;
   const { authorized } = await verifyAuthorized(token, params.id);
 
   if (!authorized) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
   }
-  
-  try {
-    const body = await req.json();
-    const { title, description } = body;
 
-    if (!title) {
-        return NextResponse.json({ message: 'Title is required' }, { status: 400 });
+  try {
+    await dbConnect();
+    const deletedQuestion = await Question.findByIdAndDelete(params.questionId);
+
+    if (!deletedQuestion) {
+      return NextResponse.json({ message: 'Question not found' }, { status: 404 });
     }
 
-    await dbConnect();
+    return NextResponse.json({ message: 'Question deleted successfully' }, { status: 200 });
 
-    const newQuiz = new Quiz({
-      course: params.id,
-      title,
-      description,
-    });
-
-    await newQuiz.save();
-
-    return NextResponse.json({ message: 'Quiz created successfully', quiz: newQuiz }, { status: 201 });
   } catch (error) {
-    console.error('Quiz creation error:', error);
+    console.error('Question deletion error:', error);
     return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });
   }
 }

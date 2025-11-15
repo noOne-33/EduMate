@@ -13,7 +13,7 @@ export interface IAssignment extends Document {
 }
 
 const AssignmentSchema: Schema = new Schema({
-  course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
+  course: { type: Schema.Types.ObjectId, ref: 'Course', required: true, index: true },
   assignmentNumber: { type: Number, required: true },
   name: { type: String, required: true },
   description: { type: String, required: true },

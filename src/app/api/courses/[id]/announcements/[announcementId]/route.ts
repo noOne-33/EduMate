@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import Quiz from '@/models/Quiz';
-import Question from '@/models/Question';
+import Announcement from '@/models/Announcement';
 import Course from '@/models/Course';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
 
+// Helper to verify instructor or admin for a given course
 async function verifyAuthorized(token: string | undefined, courseId: string) {
   if (!token) return { authorized: false };
   try {
@@ -27,7 +27,8 @@ async function verifyAuthorized(token: string | undefined, courseId: string) {
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string, quizId: string } }) {
+// PUT handler to update an announcement
+export async function PUT(req: NextRequest, { params }: { params: { id: string, announcementId: string } }) {
   const token = cookies().get('token')?.value;
   const { authorized } = await verifyAuthorized(token, params.id);
 
@@ -38,30 +39,32 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string, 
   try {
     await dbConnect();
     const body = await req.json();
-    const { title, description } = body;
-
-    if (!title) {
-        return NextResponse.json({ message: 'Title is required' }, { status: 400 });
+    const { title, content } = body;
+    
+    if (!title || !content) {
+        return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
-    const updatedQuiz = await Quiz.findByIdAndUpdate(
-      params.quizId,
-      { title, description },
+    const updatedAnnouncement = await Announcement.findByIdAndUpdate(
+      params.announcementId,
+      { title, content },
       { new: true }
     );
 
-    if (!updatedQuiz) {
-      return NextResponse.json({ message: 'Quiz not found' }, { status: 404 });
+    if (!updatedAnnouncement) {
+      return NextResponse.json({ message: 'Announcement not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Quiz updated successfully', quiz: updatedQuiz }, { status: 200 });
+    return NextResponse.json({ message: 'Announcement updated successfully', announcement: updatedAnnouncement }, { status: 200 });
+
   } catch (error) {
-    console.error('Quiz update error:', error);
+    console.error('Announcement update error:', error);
     return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string, quizId: string } }) {
+// DELETE handler to delete an announcement
+export async function DELETE(req: NextRequest, { params }: { params: { id: string, announcementId: string } }) {
   const token = cookies().get('token')?.value;
   const { authorized } = await verifyAuthorized(token, params.id);
 
@@ -71,20 +74,16 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
   try {
     await dbConnect();
-    
-    // Concurrently delete the quiz and its questions
-    const [deletedQuiz] = await Promise.all([
-        Quiz.findByIdAndDelete(params.quizId),
-        Question.deleteMany({ quiz: params.quizId })
-    ]);
+    const deletedAnnouncement = await Announcement.findByIdAndDelete(params.announcementId);
 
-    if (!deletedQuiz) {
-      return NextResponse.json({ message: 'Quiz not found' }, { status: 404 });
+    if (!deletedAnnouncement) {
+      return NextResponse.json({ message: 'Announcement not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Quiz and its questions deleted successfully' }, { status: 200 });
+    return NextResponse.json({ message: 'Announcement deleted successfully' }, { status: 200 });
+
   } catch (error) {
-    console.error('Quiz deletion error:', error);
+    console.error('Announcement deletion error:', error);
     return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });
   }
 }

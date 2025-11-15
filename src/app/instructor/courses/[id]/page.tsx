@@ -3,18 +3,24 @@ import dbConnect from '@/lib/mongodb';
 import Course from '@/models/Course';
 import Lecture from '@/models/Lecture';
 import Assignment from '@/models/Assignment';
+import Announcement from '@/models/Announcement';
 import Quiz from '@/models/Quiz';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ClipboardList, HelpCircle } from 'lucide-react';
+import { BookOpen, ClipboardList, Users, Bell, HelpCircle, CheckCircle } from 'lucide-react';
 import LectureManager from '@/components/lecture-manager';
 import AssignmentManager from '@/components/assignment-manager';
+import StudentProgressManager from '@/components/student-progress-manager';
+import AnnouncementManager from '@/components/announcement-manager';
 import QuizManager from '@/components/quiz-manager';
 import type { ILecture } from '@/models/Lecture';
 import type { IAssignment } from '@/models/Assignment';
+import type { IAnnouncement } from '@/models/Announcement';
 import type { IQuiz } from '@/models/Quiz';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import CourseCompletionButton from '@/components/course-completion-button';
 
 async function getCourse(id: string) {
   try {
@@ -64,16 +70,28 @@ async function getAssignments(courseId: string): Promise<IAssignment[]> {
     }
 }
 
+async function getAnnouncements(courseId: string): Promise<IAnnouncement[]> {
+    try {
+        await dbConnect();
+        const announcements = await Announcement.find({ course: courseId }).sort({ createdAt: -1 }).lean();
+        return JSON.parse(JSON.stringify(announcements));
+    } catch (error) {
+        console.error("Failed to fetch announcements:", error);
+        return [];
+    }
+}
+
 async function getQuizzes(courseId: string): Promise<IQuiz[]> {
     try {
         await dbConnect();
-        const quizzes = await Quiz.find({ course: courseId }).sort({ createdAt: 1 }).lean();
+        const quizzes = await Quiz.find({ course: courseId }).sort({ createdAt: -1 }).lean();
         return JSON.parse(JSON.stringify(quizzes));
     } catch (error) {
         console.error("Failed to fetch quizzes:", error);
         return [];
     }
 }
+
 
 export default async function ManageCoursePage({ params }: { params: { id: string } }) {
   const user = await getUser();
@@ -94,18 +112,33 @@ export default async function ManageCoursePage({ params }: { params: { id: strin
 
   const lectures = await getLectures(course._id);
   const assignments = await getAssignments(course._id);
+  const announcements = await getAnnouncements(course._id);
   const quizzes = await getQuizzes(course._id);
+  const isCompleted = course.status === 'completed';
+
 
   return (
     <div className="container py-12">
       <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-headline">Manage: {course.title}</CardTitle>
-          <CardDescription>Use the tabs below to manage lectures, assignments, and quizzes for this course.</CardDescription>
+        <CardHeader className="flex flex-row justify-between items-start">
+          <div>
+            <CardTitle className="text-2xl font-headline">Manage: {course.title}</CardTitle>
+            <CardDescription>Use the tabs below to manage content, students, and announcements for this course.</CardDescription>
+          </div>
+          {!isCompleted && <CourseCompletionButton courseId={course._id} />}
         </CardHeader>
         <CardContent>
+            {isCompleted && (
+                 <Alert className="mb-6">
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertTitle>Course Completed</AlertTitle>
+                    <AlertDescription>
+                        This course has been marked as complete. All content is now read-only.
+                    </AlertDescription>
+                </Alert>
+            )}
             <Tabs defaultValue="lectures" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="lectures">
                         <BookOpen className="mr-2"/> Lectures
                     </TabsTrigger>
@@ -115,15 +148,27 @@ export default async function ManageCoursePage({ params }: { params: { id: strin
                     <TabsTrigger value="quizzes">
                         <HelpCircle className="mr-2"/> Quizzes
                     </TabsTrigger>
+                    <TabsTrigger value="students">
+                        <Users className="mr-2"/> Students
+                    </TabsTrigger>
+                    <TabsTrigger value="announcements">
+                        <Bell className="mr-2"/> Announcements
+                    </TabsTrigger>
                 </TabsList>
                 <TabsContent value="lectures">
-                    <LectureManager courseId={course._id} initialLectures={lectures} />
+                    <LectureManager courseId={course._id} initialLectures={lectures} isCompleted={isCompleted}/>
                 </TabsContent>
                 <TabsContent value="assignments">
-                    <AssignmentManager courseId={course._id} initialAssignments={assignments} />
+                    <AssignmentManager courseId={course._id} initialAssignments={assignments} isCompleted={isCompleted} />
                 </TabsContent>
                 <TabsContent value="quizzes">
-                   <QuizManager courseId={course._id} initialQuizzes={quizzes} />
+                    <QuizManager courseId={course._id} initialQuizzes={quizzes} isCompleted={isCompleted}/>
+                </TabsContent>
+                <TabsContent value="students">
+                    <StudentProgressManager courseId={course._id} />
+                </TabsContent>
+                 <TabsContent value="announcements">
+                    <AnnouncementManager courseId={course._id} initialAnnouncements={announcements} isCompleted={isCompleted} />
                 </TabsContent>
             </Tabs>
         </CardContent>

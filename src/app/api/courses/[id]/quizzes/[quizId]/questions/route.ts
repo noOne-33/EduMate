@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import Quiz from '@/models/Quiz';
+import Question from '@/models/Question';
 import Course from '@/models/Course';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
@@ -26,18 +26,18 @@ async function verifyAuthorized(token: string | undefined, courseId: string) {
   }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { quizId: string } }) {
     try {
         await dbConnect();
-        const quizzes = await Quiz.find({ course: params.id }).sort({ createdAt: -1 });
-        return NextResponse.json(quizzes, { status: 200 });
+        const questions = await Question.find({ quiz: params.quizId }).sort({ createdAt: 1 });
+        return NextResponse.json(questions, { status: 200 });
     } catch (error) {
-        console.error('Failed to fetch quizzes:', error);
+        console.error('Failed to fetch questions:', error);
         return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });
     }
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: { id: string, quizId: string } }) {
   const token = cookies().get('token')?.value;
   const { authorized } = await verifyAuthorized(token, params.id);
 
@@ -47,25 +47,26 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   
   try {
     const body = await req.json();
-    const { title, description } = body;
+    const { questionText, options, correctAnswer } = body;
 
-    if (!title) {
-        return NextResponse.json({ message: 'Title is required' }, { status: 400 });
+    if (!questionText || !options || options.length < 2 || correctAnswer === undefined) {
+        return NextResponse.json({ message: 'Missing or invalid required fields' }, { status: 400 });
     }
 
     await dbConnect();
 
-    const newQuiz = new Quiz({
-      course: params.id,
-      title,
-      description,
+    const newQuestion = new Question({
+      quiz: params.quizId,
+      questionText,
+      options: options.map((opt: {text: string}) => opt.text),
+      correctAnswer,
     });
 
-    await newQuiz.save();
+    await newQuestion.save();
 
-    return NextResponse.json({ message: 'Quiz created successfully', quiz: newQuiz }, { status: 201 });
+    return NextResponse.json({ message: 'Question created successfully', question: newQuestion }, { status: 201 });
   } catch (error) {
-    console.error('Quiz creation error:', error);
+    console.error('Question creation error:', error);
     return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });
   }
 }

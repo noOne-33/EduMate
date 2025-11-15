@@ -34,6 +34,7 @@ const lectureFormSchema = z.object({
 type LectureManagerProps = {
   courseId: string;
   initialLectures: ILecture[];
+  isCompleted: boolean;
 };
 
 const iconMap = {
@@ -42,7 +43,7 @@ const iconMap = {
   url: <LinkIcon className="h-5 w-5 text-gray-500" />,
 };
 
-export default function LectureManager({ courseId, initialLectures }: LectureManagerProps) {
+export default function LectureManager({ courseId, initialLectures, isCompleted }: LectureManagerProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [lectures, setLectures] = useState(initialLectures);
@@ -151,7 +152,7 @@ export default function LectureManager({ courseId, initialLectures }: LectureMan
           <CardTitle>Lectures</CardTitle>
           <CardDescription>Create, edit, and reorder course lectures.</CardDescription>
         </div>
-         {!isFormVisible && (
+         {!isFormVisible && !isCompleted && (
           <Button onClick={handleAddNew}><PlusCircle className="mr-2" /> Add Lecture</Button>
         )}
       </CardHeader>
@@ -225,35 +226,37 @@ export default function LectureManager({ courseId, initialLectures }: LectureMan
                             {iconMap[lecture.type]}
                             <span className="font-medium">{lecture.title}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleEdit(lecture)}>
-                                <Pencil className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                        <Trash className="h-4 w-4" />
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will permanently delete the lecture. This action cannot be undone.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={() => handleDelete(lecture._id)}
-                                        className="bg-destructive hover:bg-destructive/90"
-                                    >
-                                        Delete
-                                    </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </div>
+                        {!isCompleted && (
+                          <div className="flex items-center gap-2">
+                              <Button variant="ghost" size="icon" onClick={() => handleEdit(lecture)}>
+                                  <Pencil className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                          <Trash className="h-4 w-4" />
+                                      </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          This will permanently delete the lecture. This action cannot be undone.
+                                      </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                          onClick={() => handleDelete(lecture._id)}
+                                          className="bg-destructive hover:bg-destructive/90"
+                                      >
+                                          Delete
+                                      </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
+                          </div>
+                        )}
                     </div>
                 ))
             ) : (

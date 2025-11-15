@@ -26,8 +26,8 @@ import type { IUser } from '@/models/User';
 import type { ICourse } from '@/models/Course';
 
 type PopulatedEnrollment = Omit<IEnrollment, 'user' | 'course'> & {
-  user: Pick<IUser, 'name' | 'email'>;
-  course: Pick<ICourse, 'title'>;
+  user: Pick<IUser, 'name' | 'email'> | null;
+  course: Pick<ICourse, 'title'> | null;
 };
 
 export default function AdminBillingClient({ enrollments: initialEnrollments }: { enrollments: PopulatedEnrollment[] }) {
@@ -105,10 +105,16 @@ export default function AdminBillingClient({ enrollments: initialEnrollments }: 
               {enrollments.map((enrollment) => (
                 <TableRow key={enrollment._id}>
                   <TableCell>
-                    <div className="font-medium">{enrollment.user.name}</div>
-                    <div className="text-sm text-muted-foreground">{enrollment.user.email}</div>
+                    {enrollment.user ? (
+                      <>
+                        <div className="font-medium">{enrollment.user.name}</div>
+                        <div className="text-sm text-muted-foreground">{enrollment.user.email}</div>
+                      </>
+                    ) : (
+                      <div className="text-muted-foreground">[Deleted User]</div>
+                    )}
                   </TableCell>
-                  <TableCell>{enrollment.course.title}</TableCell>
+                  <TableCell>{enrollment.course ? enrollment.course.title : <span className="text-muted-foreground">[Deleted Course]</span>}</TableCell>
                   <TableCell>{enrollment.bkashNumber}</TableCell>
                   <TableCell>{enrollment.transactionId}</TableCell>
                   <TableCell>{getStatusBadge(enrollment.status)}</TableCell>

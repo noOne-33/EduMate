@@ -42,9 +42,10 @@ const assignmentFormSchema = z.object({
 type AssignmentManagerProps = {
   courseId: string;
   initialAssignments: IAssignment[];
+  isCompleted: boolean;
 };
 
-export default function AssignmentManager({ courseId, initialAssignments }: AssignmentManagerProps) {
+export default function AssignmentManager({ courseId, initialAssignments, isCompleted }: AssignmentManagerProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [assignments, setAssignments] = useState(initialAssignments);
@@ -158,7 +159,7 @@ export default function AssignmentManager({ courseId, initialAssignments }: Assi
           <CardTitle>Assignments</CardTitle>
           <CardDescription>Create, edit, and manage course assignments.</CardDescription>
         </div>
-         {!isFormVisible && (
+         {!isFormVisible && !isCompleted && (
           <Button onClick={handleAddNew}><PlusCircle className="mr-2" /> Add Assignment</Button>
         )}
       </CardHeader>
@@ -250,35 +251,37 @@ export default function AssignmentManager({ courseId, initialAssignments }: Assi
                                 <AccordionTrigger className="flex-1 text-left">
                                     <span className="font-medium">#{assignment.assignmentNumber}: {assignment.name}</span>
                                 </AccordionTrigger>
-                                <div className="flex items-center gap-2 ml-4">
-                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(assignment)}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                                <Trash className="h-4 w-4" />
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will permanently delete the assignment. This action cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction
-                                                    onClick={() => handleDelete(assignment._id)}
-                                                    className="bg-destructive hover:bg-destructive/90"
-                                                >
-                                                    Delete
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </div>
+                                {!isCompleted && (
+                                  <div className="flex items-center gap-2 ml-4">
+                                      <Button variant="ghost" size="icon" onClick={() => handleEdit(assignment)}>
+                                          <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <AlertDialog>
+                                          <AlertDialogTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                  <Trash className="h-4 w-4" />
+                                              </Button>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                              <AlertDialogHeader>
+                                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                  <AlertDialogDescription>
+                                                      This will permanently delete the assignment. This action cannot be undone.
+                                                  </AlertDialogDescription>
+                                              </AlertDialogHeader>
+                                              <AlertDialogFooter>
+                                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                  <AlertDialogAction
+                                                      onClick={() => handleDelete(assignment._id)}
+                                                      className="bg-destructive hover:bg-destructive/90"
+                                                  >
+                                                      Delete
+                                                  </AlertDialogAction>
+                                              </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                      </AlertDialog>
+                                  </div>
+                                )}
                             </div>
                             <AccordionContent>
                                 <div className="prose prose-sm max-w-none text-muted-foreground">

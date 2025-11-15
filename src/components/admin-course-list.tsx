@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Badge } from './ui/badge';
 
 export default function AdminCourseList({ courses }: { courses: ICourse[] }) {
   const router = useRouter();
@@ -79,6 +80,7 @@ export default function AdminCourseList({ courses }: { courses: ICourse[] }) {
                     <TableHead>Title</TableHead>
                     <TableHead>Instructor</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -88,36 +90,42 @@ export default function AdminCourseList({ courses }: { courses: ICourse[] }) {
                         <TableCell className="font-medium">{course.title}</TableCell>
                         <TableCell>{course.instructor}</TableCell>
                         <TableCell>{course.category}</TableCell>
+                        <TableCell>
+                           <Badge variant={course.status === 'completed' ? 'secondary' : 'default'} className={course.status === 'completed' ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'}>
+                                {course.status}
+                           </Badge>
+                        </TableCell>
                         <TableCell className="text-right">
-                        <Button variant="outline" size="sm" asChild className="mr-2">
-                            <Link href={`/admin/courses/edit/${course._id}`}>Edit</Link>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                disabled={isDeleting === course._id}
-                            >
-                               {isDeleting === course._id ? 'Deleting...' : 'Delete'}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the course.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(course._id)}>
-                                Continue
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-
+                         <div className="flex items-center justify-end space-x-2">
+                          <Button variant="outline" size="sm" asChild className="mr-2">
+                              <Link href={`/admin/courses/edit/${course._id}`}>Edit</Link>
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={isDeleting === course._id}
+                              >
+                                {isDeleting === course._id ? 'Deleting...' : 'Delete'}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the course.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(course._id)}>
+                                  Continue
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                         </div>
                         </TableCell>
                     </TableRow>
                     ))}

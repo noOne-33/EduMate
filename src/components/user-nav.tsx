@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { CreditCard, LogOut, User as UserIcon, LayoutDashboard, BookCopy, Folder, Users, GraduationCap } from 'lucide-react';
+import { CreditCard, LogOut, User as UserIcon, LayoutDashboard, BookCopy, Folder, Users, GraduationCap, Bot } from 'lucide-react';
 import Link from 'next/link';
 
 type UserNavProps = {
@@ -115,6 +115,12 @@ export default function UserNav({ user }: UserNavProps) {
                 <Link href="/admin/billing">
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Billing</span>
+                </Link>
+              </DropdownMenuItem>
+               <DropdownMenuItem asChild>
+                <Link href="/admin/chatbot-edmate">
+                  <Bot className="mr-2 h-4 w-4" />
+                  <span>Chatbot-EduMate</span>
                 </Link>
               </DropdownMenuItem>
             </>

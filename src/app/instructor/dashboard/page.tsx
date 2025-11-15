@@ -21,10 +21,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import type { ICourse } from '@/models/Course';
+import { Badge } from '@/components/ui/badge';
 
 async function getInstructorCourses(instructorName: string): Promise<ICourse[]> {
   await dbConnect();
   try {
+    // We fetch all courses, not just active ones, to show completed ones too
     const courses = await Course.find({ instructor: instructorName }).sort({ title: 1 }).lean();
     return JSON.parse(JSON.stringify(courses));
   } catch (error) {
@@ -72,6 +74,7 @@ export default async function InstructorDashboardPage() {
               <TableRow>
                 <TableHead>Course Title</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -80,6 +83,11 @@ export default async function InstructorDashboardPage() {
                 <TableRow key={course._id}>
                   <TableCell className="font-medium">{course.title}</TableCell>
                   <TableCell>{course.category}</TableCell>
+                   <TableCell>
+                      <Badge variant={course.status === 'completed' ? 'secondary' : 'default'} className={course.status === 'completed' ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'}>
+                          {course.status}
+                      </Badge>
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="outline" size="sm">
                       <Link href={`/instructor/courses/${course._id}`}>
@@ -91,7 +99,7 @@ export default async function InstructorDashboardPage() {
                 </TableRow>
               )) : (
                 <TableRow>
-                    <TableCell colSpan={3} className="text-center">You have not been assigned to any courses yet.</TableCell>
+                    <TableCell colSpan={4} className="text-center">You have not been assigned to any courses yet.</TableCell>
                 </TableRow>
               )}
             </TableBody>
