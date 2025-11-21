@@ -27,11 +27,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Badge } from './ui/badge';
+import { CheckCircle } from 'lucide-react';
 
-export default function AdminCourseList({ courses }: { courses: ICourse[] }) {
+export default function AdminCourseList({ courses: initialCourses }: { courses: ICourse[] }) {
   const router = useRouter();
   const { toast } = useToast();
+  const [courses, setCourses] = useState(initialCourses);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isCompleting, setIsCompleting] = useState<string | null>(null);
 
   const handleDelete = async (courseId: string) => {
     setIsDeleting(courseId);
@@ -47,6 +50,7 @@ export default function AdminCourseList({ courses }: { courses: ICourse[] }) {
         title: 'Success',
         description: 'Course has been deleted.',
       });
+      setCourses(courses.filter(c => c._id !== courseId));
       router.refresh(); // Refresh the page to update the list
     } catch (error: any) {
       toast({
@@ -56,6 +60,33 @@ export default function AdminCourseList({ courses }: { courses: ICourse[] }) {
       });
     } finally {
       setIsDeleting(null);
+    }
+  };
+
+  const handleComplete = async (courseId: string) => {
+    setIsCompleting(courseId);
+    try {
+      const response = await fetch(`/api/admin/courses/${courseId}/complete`, {
+        method: 'POST',
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to complete course');
+      }
+      toast({
+        title: 'Success',
+        description: 'Course marked as completed.',
+      });
+      setCourses(courses.map(c => c._id === courseId ? result.course : c));
+      router.refresh();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message,
+      });
+    } finally {
+      setIsCompleting(null);
     }
   };
 
@@ -91,40 +122,66 @@ export default function AdminCourseList({ courses }: { courses: ICourse[] }) {
                         <TableCell>{course.instructor}</TableCell>
                         <TableCell>{course.category}</TableCell>
                         <TableCell>
-                           <Badge variant={course.status === 'completed' ? 'secondary' : 'default'} className={course.status === 'completed' ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'}>
+                            <Badge variant={course.status === 'active' ? 'secondary' : 'default'} className={course.status === 'active' ? 'bg-green-100 text-green-800' : ''}>
                                 {course.status}
-                           </Badge>
+                            </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                          <div className="flex items-center justify-end space-x-2">
-                          <Button variant="outline" size="sm" asChild className="mr-2">
-                              <Link href={`/admin/courses/edit/${course._id}`}>Edit</Link>
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  disabled={isDeleting === course._id}
-                              >
-                                {isDeleting === course._id ? 'Deleting...' : 'Delete'}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the course.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(course._id)}>
-                                  Continue
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                            {course.status === 'active' ? (
+                                <>
+                                  <Button variant="outline" size="sm" asChild>
+                                      <Link href={`/admin/courses/edit/${course._id}`}>Edit</Link>
+                                  </Button>
+                                  <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                          <Button variant="outline" size="sm" disabled={isCompleting === course._id}>
+                                              <CheckCircle className="mr-2 h-4 w-4" />
+                                              {isCompleting === course._id ? 'Completing...' : 'Complete'}
+                                          </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                  This will mark the course as completed and prevent new enrollments.
+                                              </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                              <AlertDialogAction onClick={() => handleComplete(course._id)}>
+                                              Continue
+                                              </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                  </AlertDialog>
+                                </>
+                            ) : null}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    disabled={isDeleting === course._id}
+                                >
+                                  {isDeleting === course._id ? 'Deleting...' : 'Delete'}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the course.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(course._id)}>
+                                    Continue
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                          </div>
                         </TableCell>
                     </TableRow>

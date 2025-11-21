@@ -1,8 +1,4 @@
-import dbConnect from '@/lib/mongodb';
-import Course from '@/models/Course';
-import { cookies } from 'next/headers';
-import * as jose from 'jose';
-import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -18,25 +14,33 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import dbConnect from '@/lib/mongodb';
 import type { ICourse } from '@/models/Course';
-import { Badge } from '@/components/ui/badge';
+import Course from '@/models/Course';
+import * as jose from 'jose';
+import { Eye } from 'lucide-react';
+import { cookies } from 'next/headers';
+import Link from 'next/link';
 
-async function getInstructorCourses(instructorName: string): Promise<ICourse[]> {
+async function getInstructorCourses(
+  instructorName: string
+): Promise<ICourse[]> {
   await dbConnect();
   try {
-    // We fetch all courses, not just active ones, to show completed ones too
-    const courses = await Course.find({ instructor: instructorName }).sort({ title: 1 }).lean();
+    const courses = await Course.find({ instructor: instructorName })
+      .sort({ title: 1 })
+      .lean();
     return JSON.parse(JSON.stringify(courses));
   } catch (error) {
-    console.error("Failed to fetch instructor courses:", error);
+    console.error('Failed to fetch instructor courses:', error);
     return [];
   }
 }
 
 async function getUser() {
-  const token = cookies().get('token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
+
   if (!token) return null;
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -62,11 +66,16 @@ export default async function InstructorDashboardPage() {
 
   return (
     <div className="container py-12">
-      <h1 className="text-3xl font-bold tracking-tight font-headline mb-8">Instructor Dashboard</h1>
+      <h1 className="text-3xl font-bold tracking-tight font-headline mb-8">
+        Instructor Dashboard
+      </h1>
       <Card>
         <CardHeader>
           <CardTitle>My Courses</CardTitle>
-          <CardDescription>A list of all your assigned courses. Select a course to manage its content.</CardDescription>
+          <CardDescription>
+            A list of all your assigned courses. Select a course to manage its
+            content.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -74,32 +83,32 @@ export default async function InstructorDashboardPage() {
               <TableRow>
                 <TableHead>Course Title</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {courses.length > 0 ? courses.map((course) => (
-                <TableRow key={course._id}>
-                  <TableCell className="font-medium">{course.title}</TableCell>
-                  <TableCell>{course.category}</TableCell>
-                   <TableCell>
-                      <Badge variant={course.status === 'completed' ? 'secondary' : 'default'} className={course.status === 'completed' ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'}>
-                          {course.status}
-                      </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/instructor/courses/${course._id}`}>
-                        <Eye className="mr-2" />
-                        Manage Course
-                      </Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )) : (
+              {courses.length > 0 ? (
+                courses.map((course) => (
+                  <TableRow key={course._id}>
+                    <TableCell className="font-medium">
+                      {course.title}
+                    </TableCell>
+                    <TableCell>{course.category}</TableCell>
+                    <TableCell className="text-right">
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/instructor/courses/${course._id}`}>
+                          <Eye className="mr-2" />
+                          Manage Course
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
                 <TableRow>
-                    <TableCell colSpan={4} className="text-center">You have not been assigned to any courses yet.</TableCell>
+                  <TableCell colSpan={3} className="text-center">
+                    You have not been assigned to any courses yet.
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>

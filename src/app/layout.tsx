@@ -13,13 +13,16 @@ export const metadata: Metadata = {
 };
 
 async function getUser() {
-  const tokenCookie = cookies().get('token')?.value;
-  if (!tokenCookie) {
+  const cookieStore = await cookies();
+  const tokenCookie = cookieStore.get('token');
+  
+  if (!tokenCookie?.value) {
     return null;
   }
+
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-    const { payload } = await jose.jwtVerify(tokenCookie, secret);
+    const { payload } = await jose.jwtVerify(tokenCookie.value, secret);
     return payload as { id: string; name: string; role?: string };
   } catch (e) {
     // This is expected if the token is invalid or expired

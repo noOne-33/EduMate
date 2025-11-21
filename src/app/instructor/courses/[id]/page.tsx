@@ -19,8 +19,6 @@ import type { ILecture } from '@/models/Lecture';
 import type { IAssignment } from '@/models/Assignment';
 import type { IAnnouncement } from '@/models/Announcement';
 import type { IQuiz } from '@/models/Quiz';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import CourseCompletionButton from '@/components/course-completion-button';
 
 async function getCourse(id: string) {
   try {
@@ -114,29 +112,18 @@ export default async function ManageCoursePage({ params }: { params: { id: strin
   const assignments = await getAssignments(course._id);
   const announcements = await getAnnouncements(course._id);
   const quizzes = await getQuizzes(course._id);
-  const isCompleted = course.status === 'completed';
-
+  const isCompleted = false; // Hardcoded to false as the feature is removed
 
   return (
     <div className="container py-12">
       <Card>
-        <CardHeader className="flex flex-row justify-between items-start">
+        <CardHeader>
           <div>
             <CardTitle className="text-2xl font-headline">Manage: {course.title}</CardTitle>
             <CardDescription>Use the tabs below to manage content, students, and announcements for this course.</CardDescription>
           </div>
-          {!isCompleted && <CourseCompletionButton courseId={course._id} />}
         </CardHeader>
         <CardContent>
-            {isCompleted && (
-                 <Alert className="mb-6">
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertTitle>Course Completed</AlertTitle>
-                    <AlertDescription>
-                        This course has been marked as complete. All content is now read-only.
-                    </AlertDescription>
-                </Alert>
-            )}
             <Tabs defaultValue="lectures" className="w-full">
                 <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="lectures">

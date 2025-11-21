@@ -12,6 +12,7 @@ export interface ICourse extends Document {
   price: number;
   url?: string;
   youtubeUrl?: string;
+  status: 'active' | 'completed';
 }
 
 const CourseSchema: Schema = new Schema({
@@ -25,6 +26,7 @@ const CourseSchema: Schema = new Schema({
   price: { type: Number, required: true, min: 0 },
   url: { type: String },
   youtubeUrl: { type: String },
+  status: { type: String, enum: ['active', 'completed'], default: 'active' },
 });
 
 export default mongoose.models.Course || mongoose.model<ICourse>('Course', CourseSchema);

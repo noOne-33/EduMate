@@ -7,7 +7,7 @@ import * as jose from 'jose';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Lock } from 'lucide-react';
 import mongoose from 'mongoose';
 import { courses as localCourses } from '@/lib/courses';
 import type { ICourse } from '@/models/Course';
@@ -57,6 +57,24 @@ export default async function EnrollPage({ params }: { params: { id: string } })
 
   if (!course) {
     notFound();
+  }
+
+  if (course.status === 'completed') {
+    return (
+        <div className="container py-12 text-center">
+          <Card className="max-w-md mx-auto">
+              <CardHeader>
+                  <CardTitle className="flex items-center justify-center gap-2"><Lock /> Enrollment Closed</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <p className="mb-4">This course has been completed and is no longer accepting new enrollments.</p>
+                  <Button asChild variant="outline">
+                      <Link href="/courses">Explore Other Courses</Link>
+                  </Button>
+              </CardContent>
+          </Card>
+        </div>
+    )
   }
   
   if (!user) {

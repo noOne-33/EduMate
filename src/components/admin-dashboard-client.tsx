@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -35,44 +36,31 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-const enrollmentData = [
-  { name: 'Jan', enrollments: 65 },
-  { name: 'Feb', enrollments: 59 },
-  { name: 'Mar', enrollments: 80 },
-  { name: 'Apr', enrollments: 81 },
-  { name: 'May', enrollments: 56 },
-  { name: 'Jun', enrollments: 55 },
-  { name: 'Jul', enrollments: 40 },
-];
-
-const revenueData = [
-    { name: 'Jan', revenue: 4000 },
-    { name: 'Feb', revenue: 3000 },
-    { name: 'Mar', revenue: 5000 },
-    { name: 'Apr', revenue: 4500 },
-    { name: 'May', revenue: 6000 },
-    { name: 'Jun', revenue: 5500 },
-    { name: 'Jul', revenue: 7000 },
-];
-
-const courseCompletionData = [
-    { name: 'Completed', value: 75, fill: '#82ca9d' },
-    { name: 'In Progress', value: 25, fill: '#FAAC4B' },
-];
-
-const recentTransactions = [
-    { id: 'txn_1', user: 'alex.d@example.com', course: 'Web Development Bootcamp', amount: 19.99, date: '2023-10-26' },
-    { id: 'txn_2', user: 'mia.w@example.com', course: 'The Ultimate Drawing Course', amount: 15.99, date: '2023-10-26' },
-    { id: 'txn_3', user: 'liam.p@example.com', course: 'Pianoforall', amount: 25.00, date: '2023-10-25' },
-    { id: 'txn_4', user: 'olivia.c@example.com', course: 'Digital Marketing Course', amount: 22.50, date: '2023-10-25' },
-];
+import { format, getMonth } from 'date-fns';
 
 type Instructor = {
     _id: string;
     name: string;
     email: string;
     createdAt: string;
+}
+
+type RecentTransaction = {
+    _id: string;
+    user: { email: string };
+    course: { title: string, price: number };
+    createdAt: string;
+}
+
+type MonthlyData = {
+    _id: number;
+    enrollments?: number;
+    revenue?: number;
+}
+
+type CourseStatus = {
+    _id: 'active' | 'completed';
+    count: number;
 }
 
 type AdminDashboardClientProps = {
@@ -82,10 +70,11 @@ type AdminDashboardClientProps = {
     totalCourses: number;
     pendingInstructors: Instructor[];
     totalRevenue: number;
-    revenueLastMonthPercent: number;
     studentsLastMonthPercent: number;
-    instructorsLastMonthCount: number;
-    coursesLastMonthCount: number;
+    recentTransactions: RecentTransaction[];
+    monthlyEnrollments: MonthlyData[];
+    monthlyRevenue: MonthlyData[];
+    courseStatusCounts: CourseStatus[];
   };
 };
 
@@ -111,7 +100,6 @@ export default function AdminDashboardClient({ data: initialData }: AdminDashboa
         title: 'Success',
         description: 'Instructor has been approved.',
       });
-      // Refresh data by filtering out the approved instructor
       setData(prevData => ({
           ...prevData,
           pendingInstructors: prevData.pendingInstructors.filter(inst => inst._id !== instructorId),
@@ -161,6 +149,28 @@ export default function AdminDashboardClient({ data: initialData }: AdminDashboa
     }
   };
 
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const last6Months = [...Array(6)].map((_, i) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      return { month: monthNames[d.getMonth()], monthId: d.getMonth() + 1 };
+  }).reverse();
+
+  const enrollmentChartData = last6Months.map(m => ({
+      name: m.month,
+      enrollments: data.monthlyEnrollments.find(d => d._id === m.monthId)?.enrollments || 0
+  }));
+
+  const revenueChartData = last6Months.map(m => ({
+      name: m.month,
+      revenue: data.monthlyRevenue.find(d => d._id === m.monthId)?.revenue || 0
+  }));
+  
+  const courseCompletionData = [
+    { name: 'Active', value: data.courseStatusCounts.find(s => s._id === 'active')?.count || 0, fill: '#FAAC4B' },
+    { name: 'Completed', value: data.courseStatusCounts.find(s => s._id === 'completed')?.count || 0, fill: '#82ca9d' },
+  ];
+
 
   return (
     <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -175,7 +185,7 @@ export default function AdminDashboardClient({ data: initialData }: AdminDashboa
           <CardContent>
             <div className="text-2xl font-bold">{data.totalStudents.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              +{data.studentsLastMonthPercent}% from last month
+              {data.studentsLastMonthPercent >= 0 ? '+' : ''}{data.studentsLastMonthPercent.toFixed(1)}% from last month
             </p>
           </CardContent>
         </Card>
@@ -188,8 +198,8 @@ export default function AdminDashboardClient({ data: initialData }: AdminDashboa
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.totalInstructors.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              +{data.instructorsLastMonthCount} from last month
+             <p className="text-xs text-muted-foreground">
+                <Link href="/admin/users" className="hover:underline">Manage users</Link>
             </p>
           </CardContent>
         </Card>
@@ -213,9 +223,9 @@ export default function AdminDashboardClient({ data: initialData }: AdminDashboa
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${data.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold">BDT {data.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <p className="text-xs text-muted-foreground">
-              +{data.revenueLastMonthPercent}% from last month
+               <Link href="/admin/billing" className="hover:underline">View billing details</Link>
             </p>
           </CardContent>
         </Card>
@@ -281,11 +291,11 @@ export default function AdminDashboardClient({ data: initialData }: AdminDashboa
         <Card className="col-span-4">
           <CardHeader>
             <CardTitle>Enrollment Statistics</CardTitle>
-            <CardDescription>Daily new enrollments.</CardDescription>
+            <CardDescription>New enrollments in the last 6 months.</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={enrollmentData}>
+              <BarChart data={enrollmentChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
@@ -300,15 +310,15 @@ export default function AdminDashboardClient({ data: initialData }: AdminDashboa
         <Card className="col-span-3">
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
-            <CardDescription>Monthly revenue trends.</CardDescription>
+            <CardDescription>Monthly revenue in the last 6 months.</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={revenueData}>
+              <LineChart data={revenueChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip formatter={(value) => `BDT ${value}`} />
                 <Legend />
                 <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" />
               </LineChart>
@@ -320,7 +330,7 @@ export default function AdminDashboardClient({ data: initialData }: AdminDashboa
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
               <CardHeader>
-                  <CardTitle>Course Completion Rate</CardTitle>
+                  <CardTitle>Course Status</CardTitle>
               </CardHeader>
               <CardContent>
                   <ResponsiveContainer width="100%" height={200}>
@@ -333,67 +343,35 @@ export default function AdminDashboardClient({ data: initialData }: AdminDashboa
                   </ResponsiveContainer>
               </CardContent>
           </Card>
-
-          <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-                  <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                  <div className="text-2xl font-bold">573</div>
-                  <p className="text-xs text-muted-foreground">Currently online</p>
-              </CardContent>
-          </Card>
           
-          <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Course Rating</CardTitle>
-                  <Star className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                  <div className="text-2xl font-bold">4.6/5.0</div>
-                  <p className="text-xs text-muted-foreground">Across all courses</p>
-              </CardContent>
+          <Card className="lg:col-span-2">
+            <CardHeader>
+            <CardTitle>Recent Enrollments</CardTitle>
+            </CardHeader>
+            <CardContent>
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Course</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Date</TableHead>
+                </TableRow>
+                </TableHeader>
+                <TableBody>
+                {data.recentTransactions.map((txn) => (
+                    <TableRow key={txn._id}>
+                    <TableCell>{txn.user?.email || 'N/A'}</TableCell>
+                    <TableCell>{txn.course?.title || 'N/A'}</TableCell>
+                    <TableCell>BDT {txn.course?.price?.toFixed(2) || '0.00'}</TableCell>
+                    <TableCell>{txn.createdAt}</TableCell>
+                    </TableRow>
+                ))}
+                </TableBody>
+            </Table>
+            </CardContent>
           </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentTransactions.map((txn) => (
-                <TableRow key={txn.id}>
-                  <TableCell>{txn.user}</TableCell>
-                  <TableCell>{txn.course}</TableCell>
-                  <TableCell>${txn.amount.toFixed(2)}</TableCell>
-                  <TableCell>{txn.date}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-      <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">System Status</CardTitle>
-          </CardHeader>
-          <CardContent className="mt-4">
-               <div className="flex items-center justify-between p-2 mt-2">
-                  <p className="text-sm text-green-500 flex items-center"><CheckCircle className="h-4 w-4 mr-2"/>All systems are operational.</p>
-              </div>
-          </CardContent>
-      </Card>
     </div>
   );
 }

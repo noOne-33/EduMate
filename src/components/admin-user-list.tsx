@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Table,
@@ -21,13 +21,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from './ui/badge';
-import { Clock } from 'lucide-react';
+import { Clock, Search } from 'lucide-react';
+import { Input } from './ui/input';
 
 export default function AdminUserList({ users: initialUsers }: { users: IUser[] }) {
   const router = useRouter();
   const { toast } = useToast();
   const [users, setUsers] = useState<IUser[]>(initialUsers);
   const [loadingState, setLoadingState] = useState<Record<string, boolean>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
 
   const handleRoleChange = async (userId: string, newRole: 'student' | 'instructor' | 'admin') => {
     setLoadingState(prev => ({ ...prev, [userId]: true }));
@@ -52,7 +55,7 @@ export default function AdminUserList({ users: initialUsers }: { users: IUser[] 
       // Update the user's role in the local state
       setUsers(currentUsers =>
         currentUsers.map(user =>
-          user._id === userId ? { ...user, role: newRole } : user
+          user._id === userId ? { ...user, role: newRole, status: result.user.status } : user
         )
       );
 
@@ -68,6 +71,18 @@ export default function AdminUserList({ users: initialUsers }: { users: IUser[] 
     }
   };
 
+  const filteredUsers = useMemo(() => {
+    return users
+      .filter(user => {
+        if (roleFilter === 'all') return true;
+        return user.role === roleFilter;
+      })
+      .filter(user => {
+        if (!searchQuery) return true;
+        return user.name.toLowerCase().includes(searchQuery.toLowerCase());
+      });
+  }, [users, roleFilter, searchQuery]);
+
   return (
     <div className="container py-12">
       <Card>
@@ -76,6 +91,28 @@ export default function AdminUserList({ users: initialUsers }: { users: IUser[] 
           <CardDescription>
             View and manage user roles and statuses on the platform.
           </CardDescription>
+           <div className="mt-4 flex items-center gap-4">
+              <div className="relative w-full max-w-xs">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="instructor">Instructor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -89,7 +126,7 @@ export default function AdminUserList({ users: initialUsers }: { users: IUser[] 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <TableRow key={user._id}>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -121,6 +158,11 @@ export default function AdminUserList({ users: initialUsers }: { users: IUser[] 
               ))}
             </TableBody>
           </Table>
+           {filteredUsers.length === 0 && (
+            <div className="text-center py-10">
+                <p className="text-muted-foreground">No users found matching your criteria.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

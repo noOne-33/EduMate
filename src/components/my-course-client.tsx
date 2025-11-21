@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, ClipboardList, Youtube, FileText, Link as LinkIcon, ListVideo, Send, CheckCircle, Bell, HelpCircle, ArrowLeft } from 'lucide-react';
+import { BookOpen, ClipboardList, Youtube, FileText, Link as LinkIcon, ListVideo, Send, CheckCircle, Bell, HelpCircle, ArrowLeft, Award } from 'lucide-react';
 import type { ICourse } from '@/models/Course';
 import type { ILecture } from '@/models/Lecture';
 import type { IAssignment } from '@/models/Assignment';
@@ -21,11 +21,13 @@ import { Input } from './ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Badge } from './ui/badge';
 import { IAnnouncement } from '@/models/Announcement';
 import { format } from 'date-fns';
 import { Progress } from './ui/progress';
+import { Label } from './ui/label';
 
 type MyCourseClientProps = {
     course: ICourse;
@@ -88,6 +90,19 @@ export default function MyCourseClient({ course, lectures, assignments, submissi
   });
 
   const submissionType = form.watch('submissionType');
+
+  // Certificate Eligibility Logic
+  const totalAssignments = assignments.length;
+  const totalQuizzes = quizzes.length;
+  const completedAssignments = submissions.length;
+  const completedQuizzes = quizAttempts.length;
+  const allCourseworkComplete = completedAssignments >= totalAssignments && completedQuizzes >= totalQuizzes;
+  const isCertificateEligible = allCourseworkComplete && course.status === 'completed';
+
+  const totalTasks = totalAssignments + totalQuizzes;
+  const completedTasks = completedAssignments + completedQuizzes;
+  const courseProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -303,8 +318,20 @@ export default function MyCourseClient({ course, lectures, assignments, submissi
              <Card>
                 <CardHeader>
                     <CardTitle>Course Content</CardTitle>
+                    <div className="mt-2">
+                        <Label className="text-sm text-muted-foreground">Progress</Label>
+                        <Progress value={courseProgress} className="h-2 mt-1" />
+                        <p className="text-xs text-muted-foreground mt-1">{completedTasks} of {totalTasks} items completed</p>
+                    </div>
                 </CardHeader>
                 <CardContent>
+                    {isCertificateEligible && (
+                        <Button asChild className="w-full mb-4 bg-accent hover:bg-accent/90">
+                            <Link href={`/my-courses/${course._id}/certificate`}>
+                                <Award className="mr-2"/> View Certificate
+                            </Link>
+                        </Button>
+                    )}
                     <Tabs defaultValue="lectures" className="w-full">
                         <TabsList className="grid w-full grid-cols-4">
                             <TabsTrigger value="lectures"><BookOpen /></TabsTrigger>
@@ -329,7 +356,12 @@ export default function MyCourseClient({ course, lectures, assignments, submissi
                                     const submission = getSubmissionForAssignment(assignment._id);
                                     return (
                                         <AccordionItem value={assignment._id} key={assignment._id}>
-                                            <AccordionTrigger>#{assignment.assignmentNumber}: {assignment.name}</AccordionTrigger>
+                                            <AccordionTrigger>
+                                               <div className="flex items-center gap-2">
+                                                    {submission ? <CheckCircle className="h-4 w-4 text-green-500" /> : <CheckCircle className="h-4 w-4 text-muted-foreground" />}
+                                                    <span>#{assignment.assignmentNumber}: {assignment.name}</span>
+                                               </div>
+                                            </AccordionTrigger>
                                             <AccordionContent>
                                                 <div className="prose prose-sm max-w-none text-muted-foreground mb-4">
                                                     <p>{assignment.description}</p>
@@ -437,13 +469,14 @@ export default function MyCourseClient({ course, lectures, assignments, submissi
                                     const attempt = getAttemptForQuiz(quiz._id);
                                     return (
                                         <div key={quiz._id} className="p-3 border rounded-md flex items-center justify-between">
-                                            <div>
-                                                <p className="font-medium">{quiz.title}</p>
-                                                {attempt && <p className="text-sm text-muted-foreground">Score: {attempt.score}%</p>}
+                                            <div className="flex items-center gap-2">
+                                                 {attempt ? <CheckCircle className="h-4 w-4 text-green-500" /> : <CheckCircle className="h-4 w-4 text-muted-foreground" />}
+                                                 <div>
+                                                    <p className="font-medium">{quiz.title}</p>
+                                                    {attempt && <p className="text-sm text-muted-foreground">Score: {attempt.score}%</p>}
+                                                 </div>
                                             </div>
-                                            {attempt ? (
-                                                <Badge>Completed</Badge>
-                                            ) : (
+                                            {!attempt && (
                                                 <Button size="sm" onClick={() => startQuiz(quiz)}>Start Quiz</Button>
                                             )}
                                         </div>

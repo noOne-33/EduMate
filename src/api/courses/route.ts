@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     const newCourse = new Course({
         ...body,
-        status: 'active'
+        status: 'active' // Ensure new courses are active by default
     });
     await newCourse.save();
 

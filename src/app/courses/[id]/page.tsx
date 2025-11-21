@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { courses } from '@/lib/courses';
 import { PlaceHolderImages, type ImagePlaceholder } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Star, Users, ExternalLink, Youtube } from 'lucide-react';
+import { Clock, Star, Users, ExternalLink, Youtube, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import dbConnect from '@/lib/mongodb';
 import Course from '@/models/Course';
@@ -43,6 +43,7 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
   }
 
   const image = PlaceHolderImages.find(img => img.id === course.imageId) as ImagePlaceholder;
+  const isCompleted = course.status === 'completed';
 
   return (
     <div className="container py-12">
@@ -53,6 +54,7 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
           <div className="flex items-center gap-4 mb-4 text-sm">
             <span>by {course.instructor}</span>
             <Badge variant="secondary">{course.category}</Badge>
+            {isCompleted && <Badge variant="destructive">Completed</Badge>}
           </div>
           <div className="flex items-center gap-4 text-muted-foreground text-sm">
             <div className="flex items-center gap-1">
@@ -86,9 +88,15 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
             <div className="text-3xl font-bold text-center mb-4">
                 {course.price > 0 ? `${course.price.toLocaleString()} BDT` : 'Free'}
             </div>
-            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6 mb-4" asChild>
+             {isCompleted ? (
+              <Button className="w-full text-lg py-6 mb-4" disabled>
+                <Lock className="mr-2 h-4 w-4" /> Enrollment Closed
+              </Button>
+            ) : (
+              <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6 mb-4" asChild>
                 <Link href={`/courses/${course.id}/enroll`}>Enroll Now</Link>
-            </Button>
+              </Button>
+            )}
             <div className="grid grid-cols-2 gap-2">
                 {course.url && (
                     <Button variant="outline" asChild>
